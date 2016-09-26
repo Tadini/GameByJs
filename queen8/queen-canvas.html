@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>canvas版八皇后</title>
+    <style>
+        *{margin:0;padding:0;}
+        canvas{
+            display:block;
+            box-shadow: -2px -2px 2px #efefef,5px 5px 5px #b9b9b9;
+        }
+        section{
+            width: 404px;
+            margin:0 auto;
+        }
+        h1{
+            font-size: 18px;
+            line-height: 30px;
+            text-align: center;
+        }
+        h1 span{
+            display:inline-block;
+            width: 100px;
+            height: 30px;
+            background: #556644;
+            color:#f1f1f1;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <section>
+        <h1><span id="restart">重置</span><br/>当前皇后数量:<em class="blue" id="num">0</em>,点击次数<em class="blue" id="clickNum">0</em>,我的记录:<em id="record">0</em></h1>
+        <canvas id="demo" width="400" height="400">您的浏览器不支持canvas</canvas>
+    </section>
+    
+    <script>
+        "use scrict";
+        var Util = {
+            prefix: 'queen8_canvas_',
+            setStorage: function(key,val){
+                window.localStorage.setItem(this.prefix+key,val);
+            },
+            getStorage: function(key){
+                return window.localStorage.getItem(this.prefix+key);
+            }
+        }
+
+        var Queen8 = {
+            parent: document.querySelector('#demo'),
+            queenData: [],
+            $$: function(id){
+                return document.querySelector('#'+id);
+            },
+            ctx: null,
+            num:0,//记录皇后的数量
+            clickNum:0,
+            canPlay:true,
+            init: function(){
+                var that = this;
+                this.createBoard();
+                this.parent.onclick = function(ev){
+                    ev = ev || window.event;
+                    if(!that.canPlay){
+                        alert('请重置游戏');
+                        return ;
+                    }else{
+                        that.bindClick(ev,that);
+                    }
+                }
+                //获取记录
+                var clickNum = Util.getStorage('clickNum')? Util.getStorage('clickNum') : 0;
+                this.$$('record').innerHTML = clickNum;
+                //清空数据
+                this.$$('num').innerHTML = 0;
+                this.$$('clickNum').innerHTML = 0;
+            },
+            createBoard: function(){
+                var ctx = this.parent.getContext('2d');
+                this.ctx = ctx;
+
+                for(let i=0;i<8;i++){
+                    this.queenData[i] = [];
+                    for(let j=0;j<8;j++){
+                        this.queenData[i][j] = 0;
+                        ctx.beginPath();
+                        ctx.fillStyle = (i+j)%2 ? '#333':'#fff';
+                        ctx.fillRect(50*j,50*i,50,50)
+                        
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            },
+            reCreateBoard: function(){
+                var ctx = this.ctx;
+                this.num = 0;
+                //清空画板
+                ctx.clearRect(0,0,400,400);
+
+                for(let i=0;i<8;i++){
+                    for(let j=0;j<8;j++){
+                        ctx.beginPath();
+                        if(this.queenData[i][j]){
+                            let gradient = ctx.createLinearGradient(50*j,i*50,j*50+25,i*50);
+                            gradient.addColorStop(0,'red');
+                            gradient.addColorStop(1,'orange');
+                            ctx.fillStyle = gradient; 
+                            this.num++; 
+                        }else{
+                          ctx.fillStyle = (i+j)%2 ? '#333':'#fff';  
+                        }
+                        
+                        ctx.fillRect(50*j,50*i,50,50)
+                        
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            },
+            bindClick: function(ev,that){
+                var x,y,i,j;
+                x = ev.offsetX;
+                y = ev.offsetY;
+                i = Math.floor(y/50);
+                j = Math.floor(x/50);
+                // console.log(i,j);
+                that.createQueen(i,j);
+                that.clickNum++;
+                that.$$('num').innerHTML = that.num;
+                that.$$('clickNum').innerHTML = that.clickNum;
+
+            },
+            createQueen: function(i,j){
+                // var ctx = this.ctx;
+                // ctx.beginPath();
+                // var gradient = ctx.createLinearGradient(i*50,0,i*50+25,0);
+                // gradient.addColorStop(0,'red');
+                // gradient.addColorStop(1,'orange');
+                // ctx.fillStyle = gradient;
+                // ctx.fillRect(i*50,j*50,50,50);
+                // ctx.closePath();
+                //清空当前横竖斜线反斜线的皇后
+                this.clearXQueen(i,j);
+                this.clearYQueen(i,j);
+                this.clearYXQueen(i,j); //  \
+                this.clearXYQueen(i,j); // /
+                //定义当前值为1代表为皇后
+                this.queenData[i][j] = 1;
+
+                //重画画布
+                this.reCreateBoard();
+
+                //判断是否完成
+                this.checkQueenIs8OrNot();
+            },
+            clearXQueen: function(x,y){
+                for(let i=Math.floor(x/8);i<Math.floor(x/8)+8;i++){
+                    if(i==y){
+                        continue;
+                    }
+                    this.queenData[x][i] = 0;
+                  
+                }
+            },
+            clearYQueen: function(x,y){
+                for(let j=0;j<8;j++){
+                    if(j==x){
+                        continue;
+                    }
+                    this.queenData[j][y] = 0;
+                }
+            },
+            clearXYQueen: function(x,y){ //  标识 / 方向
+                //点左下角
+                for(let i=x,j=y;i>=0&&j<8;i--,j++){
+
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+                }
+                //点右上角
+                 for(let i=x,j=y;i<8&&j>=0;i++,j--){
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+                }
+                
+            },
+            clearYXQueen: function(x,y){// 标识  \ 方向
+                //点左上角
+                for(let i=x,j=y;i>=0&&j>=0;i--,j--){
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+
+                }
+                //点右下角
+                 for(let i=x,j=y;i<8&&j<8;i++,j++){
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+
+                }
+            },
+            checkQueenIs8OrNot: function(){
+                var clickNum;
+                if(this.num == 8){
+                    this.canPlay = false;
+                    // this.parent.onclick = null;
+
+                    //获取记录
+                    clickNum = Util.getStorage('clickNum')? Util.getStorage('clickNum') : 0;
+                    
+                    setTimeout(function(){
+                        alert('恭喜你啊,完成该游戏了');
+                    
+                        //记录游戏的点击记录
+                        clickNum!=0&&clickNum<this.clickNum?Util.setStorage('clickNum',clickNum):Util.setStorage('clickNum',this.clickNum);
+
+                        Queen8.$$('record').innerHTML = Util.getStorage('clickNum');
+                    }.bind(this),10)
+                } 
+            }
+
+        }
+        Queen8.init();
+        //绑定重置按钮
+        document.querySelector('#restart').onclick = function(){
+            Queen8.init();
+        }
+    </script>
+</body>
+</html>
