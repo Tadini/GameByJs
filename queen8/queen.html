@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>八皇后DOM版</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <style>
+        *{margin:0;padding:0;}
+        section{
+            width: 404px;
+            margin:0 auto;
+        }
+        h1{
+            font-size: 18px;
+            line-height: 30px;
+            text-align: center;
+        }
+        h1 span{
+            display:inline-block;
+            width: 100px;
+            height: 30px;
+            background: #556644;
+            color:#f1f1f1;
+            cursor: pointer;
+        }
+        #demo{
+            width:400px;
+            height:400px;
+            border:2px solid #333;
+        }
+        #demo div{
+            width: 50px;
+            height: 50px;
+            float: left;
+        }
+        .black{
+            background-color: #333;
+        }
+        .white{
+            background-color: #fff;
+        }
+        .queen{
+            background:linear-gradient( #3f4 0%,#af5 30%,#fe3214 100%);
+        }
+    </style>
+</head>
+<body>
+    <section>
+        <h1><span id="restart">重置</span><br/>当前皇后数量:<em class="blue" id="num">0</em>,点击次数<em class="blue" id="clickNum">0</em>,我的记录:<em id="record">0</em></h1>
+        <div id="demo"></div>
+    </section>
+    
+    <script>
+    "use strict"
+        var Util = {
+            prefix: 'queen8_',
+            setStorage: function(key,val){
+                window.localStorage.setItem(this.prefix+key,val);
+            },
+            getStorage: function(key){
+                return window.localStorage.getItem(this.prefix+key);
+            }
+        }
+
+        var QueenOf8 = {
+            $$: function(id){
+                return document.querySelector('#'+id);
+            },
+            parent: document.querySelector('#demo'),
+            canPlay: true, //是否能够开始游戏 
+            clickNum:0,//记录点击次数
+            queenData: [],//存放皇后的数组
+            init: function(){
+                var num,clickNum;
+                this.createBox();
+                //获取记录
+                clickNum = Util.getStorage('clickNum')? Util.getStorage('clickNum') : 0;
+                this.$$('record').innerHTML = clickNum;
+                this.bindStart();
+            },
+            createBox: function (){
+                var fragments = document.createDocumentFragment();
+                for(let i=0;i<8;i++){
+                    this.queenData[i] = [];
+                    for(let j=0;j<8;j++){
+                        let div = document.createElement('div');
+                        this.queenData[i][j] = 0;
+                        div.className = (i+j)%2 ?  'black' : 'white';
+                        div.title = i+'__'+j
+                        fragments.appendChild(div);
+
+                    }
+                }
+                this.parent.appendChild(fragments);
+                this.bindEvent();
+                this.children = this.parent.children;
+            },
+            bindEvent: function(){
+
+                this.parent.addEventListener('click',function(ev){
+                    if(!this.canPlay){
+                        alert('请重置游戏');
+                        return ;
+                    }
+                    ev = ev || window.event;
+                    this.clickNum++;
+                    let target = ev.srcElement || ev.target;
+                    // console.log(ev.target.nodeName)
+                    if(ev.target.nodeName.toUpperCase() == 'DIV' &&ev.target!==this.parent){
+                        this.createQueen(target);
+                        this.num = this.getQueenNum();
+                        this.$$('num').innerHTML = this.num;
+                        this.$$('clickNum').innerHTML = this.clickNum;
+
+                        //检测游戏是否完成
+                        this.checkQueenIs8();
+                    }
+
+                    
+                }.bind(this));
+            },
+            bindStart: function(){
+                let start = this.$$('restart');
+                this.num = 0;
+                this.clickNum = 0;
+                start.onclick = function(){
+                    this.parent.innerHTML = '';
+                    this.init();
+                }.bind(this);
+            },
+            checkQueenIs8: function(){
+                if(this.num == 8){
+                    this.canPlay = false;
+                    setTimeout(function(){
+                        alert('恭喜你啊,完成该游戏了');
+                    
+                        //记录游戏的点击记录
+                        Util.setStorage('clickNum',this.clickNum);
+                    }.bind(this),10)
+                } 
+            },
+            createQueen: function(elem){
+                let index = this.getIndex(elem);
+
+                let y = index%8;
+                let x = Math.floor(index/8);
+                // console.log(x,y)
+                //清除对角皇后 和 十字方向的皇后
+                this.clearXQueen(x,y);
+                this.clearYQueen(x,y);
+                this.clearYXQueen(x,y); //  \
+                this.clearXYQueen(x,y); // /
+
+                elem.className = 'queen';
+                this.queenData[x][y] = 1;
+
+            },
+            clearXQueen: function(x,y){
+                for(let i=Math.floor(x/8);i<Math.floor(x/8)+8;i++){
+                    if(i==y){
+                        continue;
+                    }
+                    this.queenData[x][i] = 0;
+
+                    this.children[x*8+i].className = (x+i)%2 ? 'black' : 'white';
+                  
+                }
+            },
+            clearYQueen: function(x,y){
+                for(let j=0;j<8;j++){
+                    if(j==x){
+                        continue;
+                    }
+                    this.queenData[j][y] = 0;
+                    // console.log(this.children[y+8*j])
+                    this.children[y+8*j].className = (y+j)%2 ? 'black' : 'white';
+                }
+            },
+            clearXYQueen: function(x,y){ //  标识 / 方向
+                //点左下角
+                for(let i=x,j=y;i>=0&&j<8;i--,j++){
+                    if(i==x&&j==y) continue;
+                    this.queenData[i][j] = 0;
+                    // console.log(this.children[j+8*i])
+                    this.children[j+8*i].className = (i+j)%2 ? 'black' : 'white';
+                }
+                //点右上角
+                 for(let i=x,j=y;i<8&&j>=0;i++,j--){
+                    if(i==x&&j==y) continue;
+                    this.queenData[i][j] = 0;
+                    // console.log(this.children[j+8*i])
+                    this.children[j+8*i].className = (i+j)%2 ? 'black' : 'white';
+                }
+                
+            },
+            clearYXQueen: function(x,y){// 标识  \ 方向
+                //点左上角
+                for(let i=x,j=y;i>=0&&j>=0;i--,j--){
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+
+                    // console.log(this.children[j+8*i])
+                    this.children[j+8*i].className = (i+j)%2 ? 'black' : 'white';
+                }
+                //点右下角
+                 for(let i=x,j=y;i<8&&j<8;i++,j++){
+                    if(i==x&&j==y) continue;
+
+                    this.queenData[i][j] = 0;
+                    // console.log(this.children[j+8*i])
+                    this.children[j+8*i].className = (i+j)%2 ? 'black' : 'white';
+
+                }
+            },
+            getIndex:function(elem){
+                let childObj = this.parent.children;
+                let len = childObj.length;
+                for(let i = 0;i<len;i++){
+                    if(childObj[i]===elem){
+                        return i;
+                    }
+                }
+            },
+            dealIndexToXY: function(index){
+                let json = {};
+                json.y = index%7;
+                json.x = Math.floor(index/7);
+                return json;
+            },
+            getQueenNum: function(){
+                let num = 0;
+                for(let i =0;i<8;i++){
+                    for(let j=0;j<8;j++){
+                        this.queenData[i][j] == 1 ? num++ : '';
+                    }
+                }
+                return num;
+            }
+        }
+        QueenOf8.init();
+
+        
+    </script>
+</body>
+</html>
