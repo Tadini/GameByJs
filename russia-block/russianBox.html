@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>方块变形</title>
+    <title>俄罗斯方块</title>
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <style>
         *{margin:0;padding:0;}
@@ -122,7 +122,7 @@
 
                 return this;
             },
-            clearLine: function(arr){
+            clearLine: function(arr){//消除一行
 
                 // this.nowBox 
                 //获取当前方块所在的行
@@ -144,6 +144,20 @@
                         this.board.unshift(pushArr);
                         // console.log(this.board);
                     }
+                }
+
+            },
+            isOver: function(){
+                var isOver = false;
+                this.board[0].forEach(function(item){
+                    if(item!=0){
+                        isOver = true;
+                    }
+                })
+                if(isOver){
+                    clearInterval(timer);
+                    timer= 0;  
+                    alert('游戏结束');
                 }
 
             },
@@ -179,7 +193,8 @@
             fallDown: function(){
                 //判断是否到底了
                 if(this.checkBottom(this.nowBox)){
-                    this.clearLine(this.nowBox)
+                    this.isOver();
+                    this.clearLine(this.nowBox);
                     //记录已经占位的方格
                     this.setBlock(this.nowBox);
                     //初始化后续
