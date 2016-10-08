@@ -38,6 +38,7 @@
                 this.gc = this.obj.getContext('2d');
                 this.width = w ? w : 12;
                 this.height = h ? h : 12;
+                this.x = w ?Math.floor((this.width-3)/2):4;
                 this.initBoard();
                 this.initBoardData();
                 // this.drawingBoard();
@@ -61,18 +62,19 @@
             },
             initBoardData: function(){//初始化方块数据
                 this.board = [];
-                for(let i=0;i<this.height;i++){
+                for(var i=0;i<this.height;i++){
                     this.board[i]=[]
-                    for(let j=0;j<this.width;j++){
+                    for(var j=0;j<this.width;j++){
                         this.board[i][j] = 0;
                     }
                 }
             },
             drawingBoard: function(){//绘制画板
-                let gc = this.gc;
-                gc.clearRect(0,0,504,504);
-                for(let i=0;i<this.height;i++){
-                    for(let j=0;j<this.width;j++){
+                var gc = this.gc;
+                gc.clearRect(0,0,this.width*32,this.height*32);
+                
+                for(var i=0;i<this.height;i++){
+                    for(var j=0;j<this.width;j++){
                         gc.fillStyle = this.fillStyle(this.board[i][j]);
                         gc.fillRect(j*32+3,i*32+3,26,26);
                     }
@@ -92,14 +94,14 @@
                     break;
                 }
             },
-            randBox: function(){
+            randBox: function(){ //随机方块
                 var len = this.model.length;
                 var num = Math.floor(Math.random()*len);
                 return this.model[num];
             },
             createBox: function(arr){ //创建方块
-                for(let i=0;i<arr.length;i++){
-                    for(let j=0;j<arr[0].length;j++){
+                for(var i=0;i<arr.length;i++){
+                    for(var j=0;j<arr[0].length;j++){
                         if(!this.board[i+this.y][j+this.x]){
                             this.board[i+this.y][j+this.x] = arr[i][j];
                         }
@@ -112,8 +114,8 @@
             },
             clearPreferBox: function(arr){
 
-                for(let i=0;i<arr.length;i++){
-                    for(let j=0;j<arr[0].length;j++){
+                for(var i=0;i<arr.length;i++){
+                    for(var j=0;j<arr[0].length;j++){
                         if(this.board[i+this.y][j+this.x]&&this.board[i+this.y][j+this.x]<6){
                             this.board[i+this.y][j+this.x] = 0;
                         }
@@ -157,21 +159,23 @@
                 if(isOver){
                     clearInterval(timer);
                     timer= 0;  
+                    // this.createBox(this.nowBox);
                     alert('游戏结束');
                 }
+                return isOver;
 
             },
             rotate: function(arr){
-                let temp = [];//存放变形后的数组样式
-                let y = arr.length;
-                let x = arr[0].length;
+                var temp = [];//存放变形后的数组样式
+                var y = arr.length;
+                var x = arr[0].length;
                 //把temp变成二维数组 
-                for(let i=0;i<x;i++){
+                for(var i=0;i<x;i++){
                     temp[i] = [];
                 }
 
-                for(let i=0;i<y;i++){
-                    for(let j=0;j<x;j++){
+                for(var i=0;i<y;i++){
+                    for(var j=0;j<x;j++){
                         temp[j][y-i-1] = arr[i][j];
                     }
                 }
@@ -182,8 +186,8 @@
                 return this;
             },
             setBlock: function(arr){
-                for(let i=0;i<arr.length;i++){
-                    for(let j=0;j<arr[0].length;j++){
+                for(var i=0;i<arr.length;i++){
+                    for(var j=0;j<arr[0].length;j++){
                         if(this.board[i+this.y][j+this.x]){
                             this.board[i+this.y][j+this.x] = 6;//表示位置已经固定了
                         }
@@ -191,15 +195,19 @@
                 }
             },
             fallDown: function(){
+
                 //判断是否到底了
                 if(this.checkBottom(this.nowBox)){
-                    this.isOver();
+                    //判断游戏是否结束了
+                    if(this.isOver()){
+                        return;
+                    }   
                     this.clearLine(this.nowBox);
                     //记录已经占位的方格
                     this.setBlock(this.nowBox);
                     //初始化后续
                     this.y = 0;
-                    this.x = 4;//重置初始位置横坐标
+                    this.x = Math.floor((this.width-3)/2);//重置初始位置横坐标
                     this.nowBox = this.randBox();//this.model[6];
                     // console.log(this.nowBox)
                     this.createBox(this.nowBox);
@@ -269,7 +277,7 @@
                 return !1;
             },
             bindEvent: function(){
-                let self = this;
+                var self = this;
                 document.addEventListener('keydown',function(ev){
                     
                     var code = ev.keyCode;
